@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水利局职工餐厅菜谱生成器</title>
+    <style>
+    .dish-checkbox-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin: 10px 0;
+    }
+    .dish-checkbox { margin-right: 8px; }
+.checkbox-item { display: flex; align-items: center; margin-bottom: 6px; }
+.checkbox-item label { cursor: pointer; }
+.dish-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+.modal-content { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); min-width: 300px; }
+.modal-buttons { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+.modal-buttons button { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+.modal-buttons button:first-child { background: #007bff; color: white; }
+.modal-buttons button:last-child { background: #6c757d; color: white; }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            font-size: 14px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .controls {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        button {
+            margin: 0 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .title-row th {
+            border-top: 0px;
+            background-color: #e6f7ff;
+        }
+        .category-row th {
+            background-color: #fff2e6;
+        }
+        .subcategory-row th {
+            background-color: #fff9e6;
+            text-align: center;
+        }
+        .recipe-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .recipe-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        /* 弹窗样式 */
+        .dish-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 300px;
+        }
+        .dish-select {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0 20px;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: space-around;
+        }
+        .modal-buttons button {
+            padding: 8px 16px;
+        }
+
+        /* 打印样式 */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 1cm;
+            }
+            body * {
+                visibility: hidden;
+            }
+            #recipe-table, #recipe-table * {
+                visibility: visible;
+            }
+            #recipe-table {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .controls, .recipe-header {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <label for="week-select">选择周（选择周一）:</label>
+        <input type="date" id="week-select" value="2025-04-01">
+        <button id="refresh-btn">刷新菜谱</button>
+        <button id="print-btn">打印</button>
+    </div>
+
+    <table id="recipe-table">
+        <thead>
+            <tr class="title-row">
+                <th colspan="7" style="font-size: 24px;padding: 2px 0;">榆林市水利局办公区菜谱 （<span id="selected-date">2025年4月</span>）
+                </th>
+            </tr>
+            <tr class="category-row">
+                <th rowspan="2" style="width: 35px;">餐别</th>
+                <th rowspan="2" style="width: 60px;">菜品</th>
+                <th>星期一</th>
+                <th>星期二</th>
+                <th>星期三</th>
+                <th>星期四</th>
+                <th>星期五</th>
+            </tr>
+            <tr class="category-row">
+                <th id="date-1">4月1日</th>
+                <th id="date-2">4月2日</th>
+                <th id="date-3">4月3日</th>
+                <th id="date-4">4月4日</th>
+                <th id="date-5">4月5日</th>
+            </tr>
+        </thead>
+        <tbody id="recipe-body">
+            <!-- 菜谱内容将通过JS动态生成 -->
+        </tbody>
+    </table>
+    <script>
+        // 菜谱数据结构，根据Excel格式设计
+        const recipeData = {
+            // 每日小菜
+            daily小菜: ["萝卜泡菜","榨菜丝","娃娃泡菜 ","酱黄瓜","雪碧萝卜丁","紫甘蓝","心里美泡菜","榨菜丁","沙盖泡菜","玫瑰咸菜"],
+            // 凉菜
+            凉菜: ["山药木耳炒肉", "清炒豆腐", "洋葱小炒肉", "素炒三丝", "莴笋炒肉", "家常土豆丝", "花肉炒包菜", "西红柿烩冬瓜", "麻辣羊肚粉丝", "苦瓜炒山药"],
+            // 热菜
+            热菜: ["醋溜西葫芦", "蚝油生菜", "黑豆芽炒粉", "蒜香娃娃菜", "清炒芥菜", "芹菜木耳小麻球", "兰花炒山药", "韭菜炒土豆片", "香菇娃娃菜", "清炒菠菜"],
+            // 早餐面点
+            早餐面点: ["驴肉火烧", "烧麦", "酸菜包子", "炸油饼", "糖酥饼", "面包圈", "羊肉包子", "枣泥饼", "油条", "手撕饼", "红枣蛋糕", "花卷", "点心", "糖糕", "炸南瓜泡油", "杂粮馒头", "七彩蛋糕", "蛋挞", "馒头", "蛋挞"],
+            // 早餐鸡蛋
+            早餐鸡蛋: ["煎鸡蛋", "煮鸡蛋", "卤鸡蛋", "蔬菜蒸水蛋", "茶叶蛋", "韭菜蒸鸡蛋"],
+            // 早餐杂粮
+            早餐杂粮: ["榆林南瓜碎", "蒸红薯", "煮玉米", "蒸山药", "蒸芋头"],
+            // 早餐明档小吃
+            早餐明档小吃: ["榆林南瓜碎", "蒸红薯", "煮玉米", "蒸山药", "蒸芋头"],
+            // 早餐豆浆牛奶
+            豆浆牛奶: ["豆浆", "牛奶", "燕麦", "炒米"],
+            // 早餐汤粥
+            早餐汤粥: ["高粱稀饭", "西安胡辣汤", "黑米粥", "西红柿鸡蛋拌汤", "麻汤饭", "绿豆稀饭", "八宝粥", "鸡汤", "和菜饭", "黑豆钱钱稀饭"],
+            // 午餐热菜
+            午餐热菜: ["养生排骨", "酥鸡", "牛肉炖萝卜", "红烧肉焖黑愣愣", "剁椒蒸鱼块", "小白菜烩豆腐", "素烧菜", "脆猪肉熬酸菜", "炒凉粉", "榆林大烩菜"],
+            // 午餐低油少盐
+            午餐低油少盐: ["水煮肉片", "孜然羊肉", "鱿鱼烧豆腐", "鸡捞面", "炒饼丝", "清炒油麦菜", "香菇菜心", "小白菜炒木耳", "清炒豆芽", "清炒奶白菜"],
+            // 午餐热菜低油少盐（合并原有热菜和低油少盐）
+            午餐热菜低油少盐: ["养生排骨", "酥鸡", "牛肉炖萝卜", "剁椒蒸鱼块", "小白菜烩豆腐", "素烧菜", "脆猪肉熬酸菜", "清炒油麦菜", "香菇菜心", "小白菜炒木耳", "清炒豆芽", "清炒奶白菜"],
+            // 午餐主食
+            午餐主食: ["米饭", "花卷", "杂粮馒头", "米饭", "烤肠", "枣馍", "蒸南瓜", "米饭馒头", "花卷", "炸鸡米花"],
+            // 午餐汤粥
+            午餐汤粥: ["红豆稀饭", "冬瓜海带汤", "西红柿鸡蛋汤", "薏米稀饭", "黑米粥", "虾米紫菜汤", "杂粮粥", "银耳雪梨汤", "高粱稀饭", "鱼头豆腐汤"],
+            // 午餐水果
+            午餐水果: ["圣女果", "苹果", "香蕉", "砂糖橘", "梨"],
+            // 晚餐凉菜
+            晚餐凉菜: ["红油素鸡", "苦苣杏仁", "豆芽面筋", "炝拌莲花菜", "拌笋丝", "炝拌笋丝", "腐竹拌木耳", "泡菜", "蛋白苦菊", "香菜萝卜丝"],
+            // 晚餐热菜
+            晚餐热菜: ["横山豆腐炖烩菜", "杏鲍炒鸡丁", "大辣子炒肉", "精品毛血旺", "西芹炒肉", "蒜苔炒肉", "蒜蓉菜心", "孜然炒面筋", "有机花菜炒肉", "菜花炒肉"],
+            // 晚餐粥类
+            晚餐粥类: ["红薯稀饭", "苦荞小米粥", "黑豆钱钱稀饭", "豆面稀饭", "绿豆稀饭"],
+            // 晚餐面点
+            晚餐面点: ["杂酱面", "花卷", "米饭", "生片子粉汤", "炸糕", "馒头米饭", "花卷", "米饭", "油泼面", "扯面", "羊肉臊子饸饹", "馒头", "米饭", "成都冒菜", "米饭", "馒头"],
+            // 晚餐汤粥
+            晚餐汤粥: ["江豆稀饭", "苦荞小米粥", "黑豆钱钱稀饭", "豆面稀饭", "绿豆稀饭"],
+            // 晚餐汤粥: ["江豆稀饭", "苦荞小米粥", "黑豆钱钱稀饭", "豆面稀饭", "绿豆稀饭"]
+        };
+
+        // 菜品分类结构
+        const dishCategories = [
+            { section: "-----", categories: [
+            { name: "每日小菜", dataKey: "daily小菜", rowSpan: 1, num: 2 }
+            ]},
+            { section: "早餐", categories: [
+            { name: "凉菜", dataKey: "凉菜", rowSpan: 1, num: 2 },
+            { name: "热菜", dataKey: "热菜", rowSpan: 4, num: 1  },
+            { name: "面点", dataKey: "早餐面点", rowSpan: 2 , num: 2 },
+            { name: "鸡蛋", dataKey: "早餐鸡蛋", rowSpan: 1 , num: 2 },
+            { name: "杂粮", dataKey: "早餐杂粮", rowSpan: 1 , num: 1 },
+            { name: "明档小吃", dataKey: "早餐明档小吃", rowSpan: 1 , num: 1 },
+            { name: "豆浆牛奶", dataKey: "豆浆牛奶", rowSpan: 1 , num: 2 },
+            { name: "汤粥", dataKey: "早餐汤粥", rowSpan: 1, num: 4  }
+        ]},
+            { section: "午餐", categories: [
+            { name: "凉菜", dataKey: "凉菜", rowSpan: 1 , num: 2 },
+            { name: "热菜低油少盐", dataKey: "午餐热菜低油少盐", rowSpan: 5, num: 1  },
+            { name: "面点主食", dataKey: "午餐主食", rowSpan: 1, num: 2  },
+            { name: "汤粥", dataKey: "午餐汤粥", rowSpan: 1 , num: 2 },
+            { name: "水果", dataKey: "午餐水果", rowSpan: 1 , num: 2 }
+        ]},
+            { section: "晚餐", categories: [
+            { name: "凉菜", dataKey: "晚餐凉菜", rowSpan: 1 , num: 2 },
+            { name: "热菜", dataKey: "晚餐热菜", rowSpan: 2, num: 1  },
+            { name: "粥类", dataKey: "晚餐粥类", rowSpan: 1 , num: 1 },
+            { name: "面点", dataKey: "晚餐面点", rowSpan: 1 , num: 3 },
+            { name: "汤粥", dataKey: "晚餐汤粥", rowSpan: 1, num: 1  }
+        ]}];
+
+        // 获取月份的工作日日期
+        function getWorkdaysInMonth(year, month) {
+            const workdays = [];
+            const date = new Date(year, month, 1);
+            // 找到第一个工作日（周一）
+            while (date.getDay() !== 1 && workdays.length < 5) {
+                date.setDate(date.getDate() + 1);
+            }
+            // 获取5个工作日
+            for (let i = 0; i < 5; i++) {
+                if (date.getMonth() !== month) break;
+                workdays.push(new Date(date));
+                date.setDate(date.getDate() + 1);
+                // 如果是周末，跳过
+                while (date.getDay() === 0 || date.getDay() === 6) {
+                    date.setDate(date.getDate() + 1);
+                }
+            }
+            return workdays;
+        }
+
+        // 更新日期显示
+        function updateDateDisplay(year, month) {
+            const workdays = getWorkdaysInMonth(year, month);
+            document.getElementById("selected-date").textContent = `${year}年${month + 1}月`;
+            workdays.forEach((date, index) => {
+                const dateElement = document.getElementById(`date-${index + 1}`);
+                if (dateElement) {
+                    dateElement.textContent = `${month + 1}月${date.getDate()}日`;
+                }
+            });
+        }
+
+        // 随机选择菜品
+        function getRandomDish(category, hasData) {
+            const dishes = recipeData[category.dataKey] || [];
+            if (dishes.length === 0) return "";
+            let num = category.num
+            let data = new Set()
+            while(num > 0){
+                let a1 = dishes[Math.floor(Math.random() * dishes.length)];
+                if(!hasData.has(a1)){
+                    data.add(a1);
+                    hasData.add(a1);
+                    num--;
+                }
+            }
+            return [...data].join(", ")
+        }
+
+        // 生成菜谱表格
+        // 每日小菜默认随机选择2个
+        function selectRandomDailyDishes() {
+            const dailyDishes = document.querySelectorAll('.dish-checkbox.daily小菜');
+            const shuffled = Array.from(dailyDishes).sort(() => 0.5 - Math.random());
+            shuffled.slice(0, 2).forEach(checkbox => checkbox.checked = true);
+        }
+        function generateRecipeTable() {
+            const tableBody = document.getElementById("recipe-body");
+            tableBody.innerHTML = "";
+
+            dishCategories.forEach(section => {
+                // 添加餐别行
+
+                // 计算该餐别下的总行数（考虑rowSpan）
+                const totalRowSpan = section.categories.reduce((sum, category) => sum + category.rowSpan, 0);
+
+                // 添加菜品分类行
+                section.categories.forEach((category, index) => {
+                    let hasData = [new Set(),new Set(),new Set(),new Set(),new Set()]
+                    // 根据rowSpan生成对应数量的行
+                    for (let i = 0; i < category.rowSpan; i++) {
+                        const categoryRow = document.createElement("tr");
+                        categoryRow.className = "subcategory-row";
+                        // 第一列（餐别）只在第一个分类的第一行显示
+                        const mealCell = (index === 0 && i === 0) ? `<th rowspan="${totalRowSpan}">${section.section}</th>` : "";
+
+                        // 分类名称只在第一行显示，并设置rowspan
+                        const categoryCell = i === 0 ? `<th rowspan="${category.rowSpan}">${category.name}</th>` : "";
+
+                        // 菜品数据
+                        categoryRow.innerHTML = `
+                            ${mealCell}
+                            ${categoryCell}
+                            <td data-category="${category.dataKey}" onclick="openDishSelection(this)">${getRandomDish(category, hasData[0])}</td>
+                            <td data-category="${category.dataKey}" onclick="openDishSelection(this)">${getRandomDish(category, hasData[1])}</td>
+                            <td data-category="${category.dataKey}" onclick="openDishSelection(this)">${getRandomDish(category, hasData[2])}</td>
+                            <td data-category="${category.dataKey}" onclick="openDishSelection(this)">${getRandomDish(category, hasData[3])}</td>
+                            <td data-category="${category.dataKey}" onclick="openDishSelection(this)">${getRandomDish(category, hasData[4])}</td>
+                        `;
+                        tableBody.appendChild(categoryRow);
+                    }
+                });
+            });
+        }
+
+        // 打开菜品选择弹窗
+        function openDishSelection(element) {
+            const categoryKey = element.dataset.category;
+            const dishes = recipeData[categoryKey] || [];
+            const currentDish = element.textContent;
+            const selectedDishes = currentDish ? currentDish.split(',').map(d => d.trim()) : [];
+
+            // 检查是否有菜品
+            if (dishes.length === 0) {
+                alert('该分类下没有可用菜品');
+                return;
+            }
+
+            // 移除已存在的弹窗
+            document.querySelectorAll('.dish-modal').forEach(modal => modal.remove());
+
+            // 存储当前点击的单元格
+            element.classList.add('active-dish-cell');
+
+            // 创建弹窗HTML
+            const modalHTML = `
+                <div class="dish-modal" onclick="closeDishModalOnOutsideClick(event)">
+                    <div class="modal-content" onclick="event.stopPropagation()">
+                        <h3>选择菜品</h3>
+                        <div class="dish-checkbox-group">
+                            ${dishes.map(dish => `<div class="checkbox-item"><input type="checkbox" name="${categoryKey}_dish[]" value="${dish}" class="dish-checkbox ${categoryKey}" ${selectedDishes.includes(dish) ? 'checked' : ''}> <label>${dish}</label></div>`).join('')}
+                        </div>
+                        <div class="modal-buttons">
+                            <button onclick="confirmDishSelection(this, event)">确认</button>
+                            <button onclick="closeDishModal(this)">取消</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 添加弹窗到页面
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            // 设置焦点到选择框
+
+        }
+
+        // 点击弹窗外部关闭
+        function closeDishModalOnOutsideClick(event) {
+            const modal = event.target.closest('.dish-modal');
+            if (modal) {
+                closeDishModal(modal.querySelector('.modal-buttons button'));
+            }
+        }
+
+        // 确认选择菜品
+        function confirmDishSelection(button, event) {
+            event.stopPropagation();
+            const modal = button.closest('.dish-modal');
+            const checkboxes = modal.querySelectorAll('.dish-checkbox:checked');
+            const selectedDishes = Array.from(checkboxes).map(cb => cb.value);
+            const selectedDish = selectedDishes.join(', ');
+            // 获取存储的活动单元格
+            const cell = document.querySelector('.active-dish-cell');
+            if (cell) {
+                cell.textContent = selectedDish;
+                cell.classList.remove('active-dish-cell');
+            }
+            modal.remove();
+        }
+
+        // 关闭弹窗
+        function closeDishModal(button) {
+            const modal = button.closest('.dish-modal');
+            modal.remove();
+        }
+
+        // 初始化页面
+        document.addEventListener("DOMContentLoaded", () => {
+            // 获取当前选中的日期
+            const weekSelect = document.getElementById("week-select");
+            const workdays = getWorkdaysInWeek(weekSelect.value);
+            updateDateHeaders(workdays);
+            generateRecipeTable();
+        selectRandomDailyDishes();
+
+            // 刷新按钮事件
+            document.getElementById('refresh-btn').addEventListener('click', function() {
+                  generateRecipeTable();
+                  // 等待表格生成完成后再执行随机选择
+                  setTimeout(selectRandomDailyDishes, 100);
+              });
+
+            document.getElementById("print-btn").addEventListener("click", function() {
+                window.print();
+            });
+
+            // 周选择事件
+            weekSelect.addEventListener("change", function() {
+                const workdays = getWorkdaysInWeek(this.value);
+                updateDateHeaders(workdays);
+                generateRecipeTable();
+            });
+        });
+
+        // 获取指定周的工作日（周一至周五）
+        function getWorkdaysInWeek(selectedDate) {
+            const date = new Date(selectedDate);
+            // 设置为周一
+            const day = date.getDay() || 7; // 将周日的7改为0
+            if (day !== 1) {
+                date.setDate(date.getDate() - (day - 1));
+            }
+            const workdays = [];
+            for (let i = 0; i < 5; i++) {
+                workdays.push(new Date(date));
+                date.setDate(date.getDate() + 1);
+            }
+            return workdays;
+        }
+
+        // 获取周数
+        function getWeekNumber(date) {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        }
+
+        // 更新日期表头
+        function updateDateHeaders(dates) {
+            dates.forEach((date, index) => {
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                document.getElementById(`date-${index+1}`).textContent = `${month}月${day}日`;
+            });
+            // 更新标题中的日期范围
+            const startDate = dates[0];
+            const endDate = dates[dates.length - 1];
+            const weekNumber = getWeekNumber(startDate);
+            document.getElementById('selected-date').textContent = 
+                `${startDate.getFullYear()}年${startDate.getMonth()+1}月第${weekNumber}周`;
+        }
+
+        // 初始化页面
+        const initialDate = new Date('2025-04-01');
+        updateDateHeaders(getWorkdaysInWeek(initialDate));
+        generateRecipeTable();
+    </script>
+</body>
+</html>

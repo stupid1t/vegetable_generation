@@ -321,7 +321,7 @@
 <script>
     function getRecipeData() {
         // 菜谱数据结构，根据Excel格式设计
-        let recipeData = JSON.parse(localStorage.getItem('recipeData7'));
+        let recipeData = JSON.parse(localStorage.getItem('recipeData8'));
         if (!recipeData) {
             recipeData = {
                 // 凉菜
@@ -353,7 +353,8 @@
                 // 午餐主食
                 午餐主食: ["米饭", "花卷", "杂粮馒头", "米饭", "烤肠", "枣馍", "蒸南瓜", "米饭馒头", "花卷", "炸鸡米花"],
                 // 午餐汤粥
-                午餐汤粥: ["红豆稀饭", "冬瓜海带汤", "西红柿鸡蛋汤", "薏米稀饭", "黑米粥", "虾米紫菜汤", "杂粮粥", "银耳雪梨汤", "高粱稀饭", "鱼头豆腐汤"],
+                午餐汤: ["绿豆汤"],
+                午餐粥: ["红豆稀饭", "冬瓜海带汤", "西红柿鸡蛋汤", "薏米稀饭", "黑米粥", "虾米紫菜汤", "杂粮粥", "银耳雪梨汤", "高粱稀饭", "鱼头豆腐汤"],
                 // 午餐水果
                 午餐水果: ["圣女果", "苹果", "香蕉", "砂糖橘", "梨"],
                 // 晚餐凉菜
@@ -367,14 +368,14 @@
                 晚餐汤粥: ["江豆稀饭", "苦荞小米粥", "黑豆钱钱稀饭", "豆面稀饭", "绿豆稀饭"],
                 // 晚餐汤粥: ["江豆稀饭", "苦荞小米粥", "黑豆钱钱稀饭", "豆面稀饭", "绿豆稀饭"]
             };
-            localStorage.setItem('recipeData7', JSON.stringify(recipeData));
+            localStorage.setItem('recipeData8', JSON.stringify(recipeData));
         }
         return recipeData;
     }
 
     function updateRecipeData() {
         // 菜谱数据结构
-        localStorage.setItem('recipeData7', JSON.stringify(recipeData));
+        localStorage.setItem('recipeData8', JSON.stringify(recipeData));
     }
 
     // 菜谱数据结构
@@ -402,7 +403,8 @@
                 {name: "明档小吃", dataKey: "午餐明档小吃", rowSpan: 1, num: 1},
                 {name: "杂粮", dataKey: "午餐杂粮", rowSpan: 1, num: 1},
                 {name: "面点主食", dataKey: "午餐主食", rowSpan: 1, num: 3},
-                {name: "汤粥", dataKey: "午餐汤粥", rowSpan: 1, num: 3},
+                {name: "汤", dataKey: "午餐汤", rowSpan: 1, num: 1},
+                {name: "粥", dataKey: "午餐粥", rowSpan: 1, num: 2},
                 {name: "水果", dataKey: "午餐水果", rowSpan: 1, num: 1}
             ]
         },
@@ -601,7 +603,7 @@
         // 添加新菜品到数据中
         recipeData[categoryKey].push(dishName);
         // 保存到localStorage
-        localStorage.setItem('recipeData7', JSON.stringify(recipeData));
+        localStorage.setItem('recipeData8', JSON.stringify(recipeData));
 
         // 创建新菜品项并替换输入框
         const newDishItem = document.createElement('div');

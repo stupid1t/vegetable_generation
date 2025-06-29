@@ -313,7 +313,7 @@
 <script>
     function getRecipeData() {
         // 菜谱数据结构，根据Excel格式设计
-        let recipeData = JSON.parse(localStorage.getItem('recipeData'));
+        let recipeData = JSON.parse(localStorage.getItem('recipeData2'));
         if (!recipeData) {
             recipeData = {
                 // 每日小菜
@@ -360,14 +360,14 @@
                 晚餐汤粥: ["江豆稀饭", "苦荞小米粥", "黑豆钱钱稀饭", "豆面稀饭", "绿豆稀饭"],
                 // 晚餐汤粥: ["江豆稀饭", "苦荞小米粥", "黑豆钱钱稀饭", "豆面稀饭", "绿豆稀饭"]
             };
-            localStorage.setItem('recipeData', JSON.stringify(recipeData));
+            localStorage.setItem('recipeData2', JSON.stringify(recipeData));
         }
         return recipeData;
     }
 
     function updateRecipeData() {
         // 菜谱数据结构
-        localStorage.setItem('recipeData', JSON.stringify(recipeData));
+        localStorage.setItem('recipeData2', JSON.stringify(recipeData));
     }
 
     // 菜谱数据结构
@@ -591,7 +591,7 @@
         // 添加新菜品到数据中
         recipeData[categoryKey].push(dishName);
         // 保存到localStorage
-        localStorage.setItem('recipeData', JSON.stringify(recipeData));
+        localStorage.setItem('recipeData2', JSON.stringify(recipeData));
 
         // 创建新菜品项并替换输入框
         const newDishItem = document.createElement('div');

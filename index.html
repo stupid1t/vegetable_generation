@@ -256,7 +256,11 @@
 <body>
 <div class="controls">
     <label for="week-select">选择周（选择周一）:</label>
-    <input type="date" id="week-select" value="2025-04-01">
+    <input type="date" id="week-select" value="">
+    <script>
+        // 设置默认值为当前日期
+        document.getElementById('week-select').valueAsDate = new Date();
+    </script>
     <style>
         .custom-btn {
             padding: 10px 20px;

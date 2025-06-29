@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>水利局职工餐厅菜谱生成器</title>
+    <title id="html-title">市水利局食堂菜谱</title>
     <style>
         .dish-checkbox-group {
             display: flex;
@@ -255,7 +255,7 @@
 </head>
 <body>
 <div class="controls">
-    <label style="font-size: 25;" for="week-select">选择周（选择周一）:</label>
+    <label for="week-select">选择周（选择周一）:</label>
     <input type="date" id="week-select" value="2025-04-01">
     <style>
         .custom-btn {
@@ -282,42 +282,48 @@
     <button id="print-btn" class="custom-btn">打印</button>
 </div>
 
-<table id="recipe-table">
+<table id="recipe-table" contenteditable>
     <thead>
     <tr class="title-row">
-        <th colspan="7" style="font-size: 24px;padding: 2px 0;" contenteditable>市水利局办公区菜谱 （<span
-                id="selected-date">2025年4月</span>）
+        <th colspan="7" style="font-size: 24px;padding: 2px 0;" id="html-title-th">市水利局食堂<span id="selected-date">七</span>份（1）套菜谱
         </th>
     </tr>
     <tr class="category-row">
-        <th rowspan="2" style="width: 35px;">餐别</th>
-        <th rowspan="2" style="width: 60px;">菜品</th>
+        <th style="width: 35px;">日期</th>
+        <th style="width: 60px;" id="year-th">2025年</th>
+        <th id="date-1">4月1日</th>
+        <th id="date-2">4月2日</th>
+        <th id="date-3">4月3日</th>
+        <th id="date-4">4月4日</th>
+        <th id="date-5">4月5日</th>
+
+    </tr>
+    <tr class="category-row">
+        <th style="width: 35px;">餐别</th>
+        <th style="width: 60px;">菜品</th>
         <th>星期一</th>
         <th>星期二</th>
         <th>星期三</th>
         <th>星期四</th>
         <th>星期五</th>
     </tr>
-    <tr class="category-row">
-        <th id="date-1">4月1日</th>
-        <th id="date-2">4月2日</th>
-        <th id="date-3">4月3日</th>
-        <th id="date-4">4月4日</th>
-        <th id="date-5">4月5日</th>
-    </tr>
     </thead>
     <tbody id="recipe-body">
     <!-- 菜谱内容将通过JS动态生成 -->
     </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="7" style="text-align: left"><span>备注：</span><span>1、受季节因素或特殊原因影响，我们将对菜品进行临时调整，由此带来不便，敬请谅解;</>
+                <div style="margin-left: 43px">2、倡导文明用餐，请遵循“按需取餐，勤拿少取”原则，践行“光盘行动、杜绝浪费”。</div></td>
+        </tr>
+    </tfoot>
 </table>
 <script>
     function getRecipeData() {
         // 菜谱数据结构，根据Excel格式设计
-        let recipeData = JSON.parse(localStorage.getItem('recipeData2'));
+        let recipeData = JSON.parse(localStorage.getItem('recipeData7'));
         if (!recipeData) {
             recipeData = {
-                // 每日小菜
-                daily小菜: ["萝卜泡菜", "榨菜丝", "娃娃泡菜 ", "酱黄瓜", "雪碧萝卜丁", "紫甘蓝", "心里美泡菜", "榨菜丁", "沙盖泡菜", "玫瑰咸菜"],
                 // 凉菜
                 凉菜: ["山药木耳炒肉", "清炒豆腐", "洋葱小炒肉", "素炒三丝", "莴笋炒肉", "家常土豆丝", "花肉炒包菜", "西红柿烩冬瓜", "麻辣羊肚粉丝", "苦瓜炒山药"],
                 // 热菜
@@ -336,12 +342,14 @@
                 早餐汤粥: ["高粱稀饭", "西安胡辣汤", "黑米粥", "西红柿鸡蛋拌汤", "麻汤饭", "绿豆稀饭", "八宝粥", "鸡汤", "和菜饭", "黑豆钱钱稀饭"],
                 // 午餐热菜
                 午餐热菜: ["养生排骨", "酥鸡", "牛肉炖萝卜", "红烧肉焖黑愣愣愣", "剁椒蒸鱼块", "小白菜烩豆腐", "素烧菜", "脆猪肉熬酸菜", "炒凉粉", "榆林大烩菜"],
-                // 午餐低油少盐
-                午餐低油少盐: ["水煮肉片", "孜然羊肉", "鱿鱼烧豆腐", "鸡捞面", "炒饼丝", "清炒油麦菜", "香菇菜心", "小白菜炒木耳", "清炒豆芽", "清炒奶白菜"],
-                // 午餐热菜低油少盐（合并原有热菜和低油少盐）
-                午餐热菜低油少盐: ["养生排骨", "酥鸡", "牛肉炖萝卜", "剁椒蒸鱼块", "小白菜烩豆腐", "素烧菜", "脆猪肉熬酸菜", "清炒油麦菜", "香菇菜心", "小白菜炒木耳", "清炒豆芽", "清炒奶白菜"],
+                // 午餐素菜
+                午餐素菜: ["水煮肉片", "孜然羊肉", "鱿鱼烧豆腐", "鸡捞面", "炒饼丝", "清炒油麦菜", "香菇菜心", "小白菜炒木耳", "清炒豆芽", "清炒奶白菜"],
+                // 午餐热菜素菜（合并原有热菜和素菜）
+                午餐热菜荤菜: ["养生排骨", "酥鸡", "牛肉炖萝卜", "剁椒蒸鱼块", "小白菜烩豆腐", "素烧菜", "脆猪肉熬酸菜", "清炒油麦菜", "香菇菜心", "小白菜炒木耳", "清炒豆芽", "清炒奶白菜"],
+                午餐热菜素菜: ["养生排骨", "酥鸡", "牛肉炖萝卜", "剁椒蒸鱼块", "小白菜烩豆腐", "素烧菜", "脆猪肉熬酸菜", "清炒油麦菜", "香菇菜心", "小白菜炒木耳", "清炒豆芽", "清炒奶白菜"],
                 // 午餐明档小吃
                 午餐明档小吃: ["榆林南瓜碎", "蒸红薯", "煮玉米", "蒸山药", "蒸芋头"],
+                午餐杂粮: ["蒸大枣","煮毛豆","蒸萝卜","烤肠","煮玉米","南瓜"],
                 // 午餐主食
                 午餐主食: ["米饭", "花卷", "杂粮馒头", "米饭", "烤肠", "枣馍", "蒸南瓜", "米饭馒头", "花卷", "炸鸡米花"],
                 // 午餐汤粥
@@ -351,23 +359,22 @@
                 // 晚餐凉菜
                 晚餐凉菜: ["红油素鸡", "苦苣杏仁", "豆芽面筋", "炝拌莲花菜", "拌笋丝", "炝拌笋丝", "腐竹拌木耳", "泡菜", "蛋白苦菊", "香菜萝卜丝"],
                 // 晚餐热菜
-                晚餐热菜: ["横山豆腐炖烩菜", "杏鲍炒鸡丁", "大辣子炒肉", "精品毛血旺", "西芹炒肉", "蒜苔炒肉", "蒜蓉菜心", "孜然炒面筋", "有机花菜炒肉", "菜花炒肉"],
-                // 晚餐粥类
-                晚餐粥类: ["红薯稀饭", "苦荞小米粥", "黑豆钱钱稀饭", "豆面稀饭", "绿豆稀饭"],
+                晚餐主菜: ["横山豆腐炖烩菜", "杏鲍炒鸡丁", "大辣子炒肉", "精品毛血旺", "西芹炒肉", "蒜苔炒肉", "蒜蓉菜心", "孜然炒面筋", "有机花菜炒肉", "菜花炒肉"],
+                晚餐素菜: ["横山豆腐炖烩菜", "杏鲍炒鸡丁", "大辣子炒肉", "精品毛血旺", "西芹炒肉", "蒜苔炒肉", "蒜蓉菜心", "孜然炒面筋", "有机花菜炒肉", "菜花炒肉"],
                 // 晚餐面点
                 晚餐面点: ["杂酱面", "花卷", "米饭", "生片子粉汤", "炸糕", "馒头米饭", "花卷", "米饭", "油泼面", "扯面", "羊肉臊子饸饹", "馒头", "米饭", "成都冒菜", "米饭", "馒头"],
                 // 晚餐汤粥
                 晚餐汤粥: ["江豆稀饭", "苦荞小米粥", "黑豆钱钱稀饭", "豆面稀饭", "绿豆稀饭"],
                 // 晚餐汤粥: ["江豆稀饭", "苦荞小米粥", "黑豆钱钱稀饭", "豆面稀饭", "绿豆稀饭"]
             };
-            localStorage.setItem('recipeData2', JSON.stringify(recipeData));
+            localStorage.setItem('recipeData7', JSON.stringify(recipeData));
         }
         return recipeData;
     }
 
     function updateRecipeData() {
         // 菜谱数据结构
-        localStorage.setItem('recipeData2', JSON.stringify(recipeData));
+        localStorage.setItem('recipeData7', JSON.stringify(recipeData));
     }
 
     // 菜谱数据结构
@@ -376,37 +383,34 @@
     // 菜品分类结构
     const dishCategories = [
         {
-            section: "-----", categories: [
-                {name: "每日小菜", dataKey: "daily小菜", rowSpan: 1, num: 2}
-            ]
-        },
-        {
             section: "早餐", categories: [
                 {name: "凉菜", dataKey: "凉菜", rowSpan: 1, num: 2},
-                {name: "热菜", dataKey: "热菜", rowSpan: 4, num: 1},
+                {name: "热菜", dataKey: "热菜", rowSpan: 2, num: 2},
                 {name: "面点", dataKey: "早餐面点", rowSpan: 2, num: 2},
-                {name: "鸡蛋", dataKey: "早餐鸡蛋", rowSpan: 1, num: 2},
-                {name: "杂粮", dataKey: "早餐杂粮", rowSpan: 1, num: 1},
+                {name: "鸡蛋", dataKey: "早餐鸡蛋", rowSpan: 1, num: 1},
+                {name: "杂粮", dataKey: "早餐杂粮", rowSpan: 1, num: 2},
                 {name: "明档小吃", dataKey: "早餐明档小吃", rowSpan: 1, num: 1},
                 {name: "豆浆牛奶", dataKey: "豆浆牛奶", rowSpan: 1, num: 2},
-                {name: "汤粥", dataKey: "早餐汤粥", rowSpan: 1, num: 4}
+                {name: "汤粥", dataKey: "早餐汤粥", rowSpan: 1, num: 2}
             ]
         },
         {
             section: "午餐", categories: [
                 {name: "凉菜", dataKey: "凉菜", rowSpan: 1, num: 2},
-                {name: "热菜低油少盐", dataKey: "午餐热菜低油少盐", rowSpan: 5, num: 1},
+                {name: "热菜荤菜", dataKey: "午餐热菜荤菜", rowSpan: 2, num: 1, bold: true},
+                {name: "热菜素菜", dataKey: "午餐热菜素菜", rowSpan: 3, num: 1},
                 {name: "明档小吃", dataKey: "午餐明档小吃", rowSpan: 1, num: 1},
-                {name: "面点主食", dataKey: "午餐主食", rowSpan: 1, num: 2},
+                {name: "杂粮", dataKey: "午餐杂粮", rowSpan: 1, num: 1},
+                {name: "面点主食", dataKey: "午餐主食", rowSpan: 1, num: 3},
                 {name: "汤粥", dataKey: "午餐汤粥", rowSpan: 1, num: 2},
-                {name: "水果", dataKey: "午餐水果", rowSpan: 1, num: 2}
+                {name: "水果", dataKey: "午餐水果", rowSpan: 1, num: 1}
             ]
         },
         {
             section: "晚餐", categories: [
                 {name: "凉菜", dataKey: "晚餐凉菜", rowSpan: 1, num: 2},
-                {name: "热菜", dataKey: "晚餐热菜", rowSpan: 2, num: 1},
-                {name: "粥类", dataKey: "晚餐粥类", rowSpan: 1, num: 1},
+                {name: "热菜荤菜", dataKey: "晚餐主菜", rowSpan: 1, num: 1, bold: true},
+                {name: "热菜素菜", dataKey: "晚餐素菜", rowSpan: 2, num: 1},
                 {name: "面点", dataKey: "晚餐面点", rowSpan: 1, num: 3},
                 {name: "汤粥", dataKey: "晚餐汤粥", rowSpan: 1, num: 1}
             ]
@@ -484,6 +488,10 @@
             section.categories.forEach((category, index) => {
                 let hasData = [new Set(), new Set(), new Set(), new Set(), new Set()]
                 // 根据rowSpan生成对应数量的行
+                let bold = ''
+                if(category.bold){
+                    bold = "font-weight:bold"
+                }
                 for (let i = 0; i < category.rowSpan; i++) {
                     const categoryRow = document.createElement("tr");
                     categoryRow.className = "subcategory-row";
@@ -491,17 +499,19 @@
                     const mealCell = (index === 0 && i === 0) ? `<th rowspan="${totalRowSpan}">${section.section}</th>` : "";
 
                     // 分类名称只在第一行显示，并设置rowspan
-                    const categoryCell = i === 0 ? `<th data-category="${category.dataKey}" onclick="openDishSelectionManage(this)" rowspan="${category.rowSpan}">${category.name}</th>` : "";
+                    const categoryCell = i === 0 ? `<th data-category="${category.dataKey}" ondblclick="openDishSelectionManage(this)" rowspan="${category.rowSpan}">${category.name}</th>` : "";
+
+
 
                     // 菜品数据
                     categoryRow.innerHTML = `
                             ${mealCell}
                             ${categoryCell}
-                            <td data-category="${category.dataKey}" onclick="openDishSelection(this)">${getRandomDish(category, hasData[0])}</td>
-                            <td data-category="${category.dataKey}" onclick="openDishSelection(this)">${getRandomDish(category, hasData[1])}</td>
-                            <td data-category="${category.dataKey}" onclick="openDishSelection(this)">${getRandomDish(category, hasData[2])}</td>
-                            <td data-category="${category.dataKey}" onclick="openDishSelection(this)">${getRandomDish(category, hasData[3])}</td>
-                            <td data-category="${category.dataKey}" onclick="openDishSelection(this)">${getRandomDish(category, hasData[4])}</td>
+                            <td data-category="${category.dataKey}" style="${bold}" ondblclick="openDishSelection(this)">${getRandomDish(category, hasData[0])}</td>
+                            <td data-category="${category.dataKey}" style="${bold}" ondblclick="openDishSelection(this)">${getRandomDish(category, hasData[1])}</td>
+                            <td data-category="${category.dataKey}" style="${bold}" ondblclick="openDishSelection(this)">${getRandomDish(category, hasData[2])}</td>
+                            <td data-category="${category.dataKey}" style="${bold}" ondblclick="openDishSelection(this)">${getRandomDish(category, hasData[3])}</td>
+                            <td data-category="${category.dataKey}" style="${bold}" ondblclick="openDishSelection(this)">${getRandomDish(category, hasData[4])}</td>
                         `;
                     tableBody.appendChild(categoryRow);
                 }
@@ -591,7 +601,7 @@
         // 添加新菜品到数据中
         recipeData[categoryKey].push(dishName);
         // 保存到localStorage
-        localStorage.setItem('recipeData2', JSON.stringify(recipeData));
+        localStorage.setItem('recipeData7', JSON.stringify(recipeData));
 
         // 创建新菜品项并替换输入框
         const newDishItem = document.createElement('div');
@@ -703,6 +713,7 @@
         });
 
         document.getElementById("print-btn").addEventListener("click", function () {
+            document.getElementById('html-title').textContent = document.getElementById('html-title-th').textContent
             window.print();
         });
 
@@ -748,8 +759,10 @@
         const startDate = dates[0];
         const endDate = dates[dates.length - 1];
         const weekNumber = getWeekNumber(startDate);
-        document.getElementById('selected-date').textContent =
-            `${startDate.getFullYear()}年${startDate.getMonth() + 1}月第${weekNumber}周`;
+        //document.getElementById('selected-date').textContent = `${startDate.getFullYear()}年${startDate.getMonth() + 1}月第${weekNumber}周`;
+        const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+        document.getElementById('selected-date').textContent = monthNames[startDate.getMonth()];
+        document.getElementById('year-th').textContent = `${startDate.getFullYear()}年`
     }
 
     // 初始化页面
